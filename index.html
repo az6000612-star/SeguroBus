@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SeguroBus - Tu seguridad en el transporte</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primario: '#1E40AF',
+                        secundario: '#1E88E5',
+                        peligro: '#DC2626',
+                        alerta: '#F59E0B',
+                        seguro: '#16A34A',
+                        grisFondo: '#F3F4F6'
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
+        body { background: #F3F4F6; min-height: 100vh; }
+        .pantalla { display: none; width: 100%; min-height: 100vh; max-width: 420px; margin: 0 auto; background: white; }
+        .activa { display: block !important; }
+        .boton { width: 100%; padding: 16px; font-size: 18px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin: 8px 0; }
+        .boton-primario { background: #1E40AF; color: white; }
+        .boton-peligro { background: #DC2626; color: white; }
+        .boton-seguro { background: #16A34A; color: white; }
+        .boton-texto { background: transparent; color: #1E40AF; border: none; padding: 12px; }
+        .input { width: 100%; padding: 14px; border: 2px solid #E5E7EB; border-radius: 10px; margin: 8px 0; font-size: 16px; }
+        .cabecera { padding: 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E5E7EB; }
+        .icono-boton { display: flex; flex-direction: column; align-items: center; padding: 16px; cursor: pointer; border-radius: 12px; transition: all 0.2s; }
+        .icono-boton:hover { background: #EFF6FF; }
+        .boton-panico { width: 180px; height: 180px; border-radius: 50%; background: #DC2626; color: white; font-size: 24px; font-weight: bold; border: 8px solid #FECACA; cursor: pointer; box-shadow: 0 8px 24px rgba(220,38,38,0.3); transition: all 0.2s; }
+        .boton-panico:active { transform: scale(0.95); }
+        .tarjeta { background: white; border-radius: 12px; padding: 16px; margin: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .barra-inferior { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: white; border-top: 1px solid #E5E7EB; display: flex; justify-content: space-around; padding: 12px 0; }
+        .item-barra { display: flex; flex-direction: column; align-items: center; font-size: 12px; color: #6B7280; cursor: pointer; }
+        .item-barra.activo { color: #1E40AF; font-weight: bold; }
+        #mapa-seguro { height: calc(100vh - 140px); margin: 0; border-radius: 0; }
+        .circulo-peligro { border-radius: 50%; opacity: 0.4; }
+    </style>
+</head>
+<body>
+
+<!-- 1. INICIO DE SESIÓN -->
+<div id="login" class="pantalla activa flex flex-col justify-center p-8">
+    <div class="text-center mb-12">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-primario rounded-full mb-4">
+            <i class="fa fa-shield text-4xl text-white"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-primario">SeguroBus</h1>
+        <p class="text-gray-600 mt-2">Tu seguridad, nuestra prioridad</p>
+    </div>
+    <input type="email" class="input" placeholder="Correo electrónico">
+    <input type="password" class="input" placeholder="Contraseña">
+    <button onclick="irPantalla('principal')" class="boton boton-primario">INGRESAR</button>
+    <button class="boton boton-texto">¿Olvidaste tu contraseña?</button>
+</div>
+
+<!-- 2. PANTALLA PRINCIPAL -->
+<div id="principal" class="pantalla pb-20">
+    <div class="cabecera">
+        <div>
+            <h2 class="text-xl font-bold">¡Hola, Carlos!</h2>
+            <p class="text-gray-600 mt-2">Todo en orden ✅</p>
+        </div>
+        <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+            <i class="fa fa-user text-gray-500"></i>
+        </div>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-2 gap-4">
+            <div class="icono-boton" onclick="irPantalla('mapa')">
+                <i class="fa fa-map-marker text-3xl text-primario mb-2"></i>
+                <span class="text-sm font-medium">Mapa en tiempo real</span>
+            </div>
+            <div class="icono-boton" onclick="irPantalla('panico')">
+                <i class="fa fa-bell text-3xl text-peligro mb-2"></i>
+                <span class="text-sm font-medium">Alerta de emergencia</span>
+            </div>
+            <div class="icono-boton" onclick="irPantalla('contactos')">
+                <i class="fa fa-users text-3xl text-seguro mb-2"></i>
+                <span class="text-sm font-medium">Contactos de emergencia</span>
+            </div>
+            <div class="icono-boton" onclick="irPantalla('zonas')">
+                <i class="fa fa-exclamation-triangle text-3xl text-alerta mb-2"></i>
+                <span class="text-sm font-medium">Zonas de riesgo</span>
+            </div>
+            <div class="icono-boton" onclick="irPantalla('historial')">
+                <i class="fa fa-history text-3xl text-gray-600 mb-2"></i>
+                <span class="text-sm font-medium">Historial de incidentes</span>
+            </div>
+            <div class="icono-boton" onclick="irPantalla('info')">
+                <i class="fa fa-info-circle text-3xl text-secundario mb-2"></i>
+                <span class="text-sm font-medium">¿Cómo funciona?</span>
+            </div>
+        </div>
+    </div>
+    <div class="barra-inferior">
+        <div class="item-barra activo" onclick="irPantalla('principal')">
+            <i class="fa fa-home text-xl mb-1"></i> Inicio
+        </div>
+        <div class="item-barra" onclick="irPantalla('mapa')">
+            <i class="fa fa-map text-xl mb-1"></i> Mapa
+        </div>
+        <div class="item-barra" onclick="irPantalla('panico')">
+            <i class="fa fa-bell text-xl mb-1"></i> Alerta
+        </div>
+        <div class="item-barra" onclick="irPantalla('contactos')">
+            <i class="fa fa-user-circle text-xl mb-1"></i> Perfil
+        </div>
+    </div>
+</div>
+
+<!-- 3. BOTÓN DE PÁNICO -->
+<div id="panico" class="pantalla flex flex-col justify-center items-center p-8 pb-20">
+    <button onclick="irPantalla('principal')" class="absolute top-6 left-6 text-2xl text-gray-600">
+        <i class="fa fa-arrow-left"></i>
+    </button>
+    <h2 class="text-2xl font-bold text-center mb-2">¿Necesitas ayuda?</h2>
+    <p class="text-gray-600 text-center mb-10">Activa la alerta para avisar a tus contactos y autoridades</p>
+    <button class="boton-panico mb-8" onclick="activarAlerta()">
+        ACTIVAR<br>ALERTA
+    </button>
+    <p class="text-sm text-gray-500">Advertencias por voz en el transporte</p>
+    <div class="barra-inferior">
+        <div class="item-barra" onclick="irPantalla('principal')">
+            <i class="fa fa-home text-xl mb-1"></i> Inicio
+        </div>
+        <div class="item-barra" onclick="irPantalla('mapa')">
+            <i class="fa fa-map text-xl mb-1"></i> Mapa
+        </div>
+        <div class="item-barra activo" onclick="irPantalla('panico')">
+            <i class="fa fa-bell text-xl mb-1"></i> Alerta
+        </div>
+        <div class="item-barra" onclick="irPantalla('contactos')">
+            <i class="fa fa-user-circle text-xl mb-1"></i> Perfil
+        </div>
+    </div>
+</div>
+
+<!-- 4. MAPA EN TIEMPO REAL -->
+<div id="mapa" class="pantalla pb-20">
+    <div class="cabecera sticky top-0 bg-white z-10">
+        <button onclick="irPantalla('principal')" class="text-xl"><i class="fa fa-arrow-left"></i></button>
+        <h2 class="text-lg font-bold">Mapa en tiempo real</h2>
+        <div></div>
+    </div>
+    <div id="mapa-seguro"></div>
+    <div class="barra-inferior">
+        <div class="item-barra" onclick="irPantalla('principal')">
+            <i class="fa fa-home text-xl mb-1"></i> Inicio
+        </div>
+        <div class="item-barra activo" onclick="irPantalla('mapa')">
+            <i class="fa fa-map text-xl mb-1"></i> Mapa
+        </div>
+        <div class="item-barra" onclick="irPantalla('panico')">
+            <i class="fa fa-bell text-xl mb-1"></i> Alerta
+        </div>
+        <div class="item-barra" onclick="irPantalla('contactos')">
+            <i class="fa fa-user-circle text-xl mb-1"></i> Perfil
+        </div>
+    </div>
+</div>
+
+<!-- 5. CONTACTOS DE EMERGENCIA -->
+<div id="contactos" class="pantalla pb-20">
+    <div class="cabecera">
+        <button onclick="irPantalla('principal')" class="text-xl"><i class="fa fa-arrow-left"></i></button>
+        <h2 class="text-lg font-bold">Contactos de Emergencia</h2>
+        <button class="text-primario font-medium">Agregar</button>
+    </div>
+    <div class="p-4">
+        <div class="tarjeta flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fa fa-user text-primario"></i>
+                </div>
+                <div>
+                    <p class="font-bold">María López</p>
+                    <p class="text-sm text-gray-600">Madre - 0991234567</p>
+                </div>
+            </div>
+            <button class="text-seguro text-xl"><i class="fa fa-phone"></i></button>
+        </div>
+        <div class="tarjeta flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fa fa-user text-seguro"></i>
+                </div>
+                <div>
+                    <p class="font-bold">Juan Pérez</p>
+                    <p class="text-sm text-gray-600">Hermano - 0987654321</p>
+                </div>
+            </div>
+            <button class="text-seguro text-xl"><i class="fa fa-phone"></i></button>
+        </div>
+        <div class="tarjeta flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fa fa-shield text-peligro"></i>
+                </div>
+                <div>
+                    <p class="font-bold">Policía Nacional</p>
+                    <p class="text-sm text-gray-600">Número único: 911</p>
+                </div>
+            </div>
+            <button class="text-seguro text-xl"><i class="fa fa-phone"></i></button>
+        </div>
+        <button class="boton boton-primario mt-4">AGREGAR CONTACTO</button>
+    </div>
+    <div class="barra-inferior">
+        <div class="item-barra" onclick="irPantalla('principal')">
+            <i class="fa fa-home text-xl mb-1"></i> Inicio
+        </div>
+        <div class="item-barra" onclick="irPantalla('mapa')">
+            <i class="fa fa-map text-xl mb-1"></i> Mapa
+        </div>
+        <div class="item-barra" onclick="irPantalla('panico')">
+            <i class="fa fa-bell text-xl mb-1"></i> Alerta
+        </div>
+        <div class="item-barra activo" onclick="irPantalla('contactos')">
+            <i class="fa fa-user-circle text-xl mb-1"></i> Perfil
+        </div>
+    </div>
+</div>
+
+<!-- 6. HISTORIAL DE INCIDENTES -->
+<div id="historial" class="pantalla">
+    <div class="cabecera">
+        <button onclick="irPantalla('principal')" class="text-xl"><i class="fa fa-arrow-left"></i></button>
+        <h2 class="text-lg font-bold">Historial de Incidentes</h2>
+    </div>
+    <div class="p-4">
+        <div class="tarjeta">
+            <p class="font-bold text-peligro">Alerta activada</p>
+            <p class="text-sm text-gray-600">14/07/2026 - 18:20 | Av. 25 de Junio</p>
+            <p class="text-sm mt-1">Aviso enviado a 3 contactos y Policía</p>
+        </div>
+        <div class="tarjeta">
+            <p class="font-bold text-alerta">Zona de riesgo</p>
+            <p class="text-sm text-gray-600">12/07/2026 - 07:45 | Barrio El Cambio</p>
+            <p class="text-sm mt-1">Desvío recomendado</p>
+        </div>
+        <div class="tarjeta">
+            <p class="font-bold text-seguro">Ruta segura completada</p>
+            <p class="text-sm text-gray-600">10/07/2026 - 12:10 | Terminal Terrestre</p>
+        </div>
+    </div>
+</div>
+
+<!-- 7. ZONAS DE RIESGO -->
+<div id="zonas" class="pantalla">
+    <div class="cabecera">
+        <button onclick="irPantalla('principal')" class="text-xl"><i class="fa fa-arrow-left"></i></button>
+        <h2 class="text-lg font-bold">Zonas de Riesgo</h2>
+    </div>
+    <div id="mapa-zonas" style="height: 60vh;"></div>
+    <div class="p-4 flex justify-around text-sm">
+        <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-peligro"></span> Alto riesgo</div>
+        <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-alerta"></span> Medio riesgo</div>
+        <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-seguro"></span> Seguro</div>
+    </div>
+</div>
+
+<!-- 8. INFORMACIÓN -->
+<div id="info" class="pantalla">
+    <div class="cabecera">
+        <button onclick="irPantalla('principal')" class="text-xl"><i class="fa fa-arrow-left"></i></button>
+        <h2 class="text-lg font-bold">¿Cómo funciona SeguroBus?</h2>
+    </div>
+    <div class="p-6">
+        <div class="tarjeta">
+            <h3 class="font-bold mb-2">🛡️ Características principales</h3>
+            <ul class="text-gray-700 space-y-2">
+                <li>✅ Alerta inmediata con un solo botón</li>
+                <li>✅ Ubicación en tiempo real compartida</li>
+                <li>✅ Protección para conductores y pasajeros</li>
+                <li>✅ Rutas seguras y zonas de riesgo marcadas</li>
+                <li>✅ Contactos de confianza y autoridades</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+let mapaSeguro, mapaZonas;
+
+// CAMBIAR DE PANTALLA
+function irPantalla(id) {
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById(id).classList.add('activa');
+    if(id === 'mapa' && !mapaSeguro) cargarMapaPrincipal();
+    if(id === 'zonas' && !mapaZonas) cargarMapaZonas();
+}
+
+// ACTIVAR ALERTA
+function activarAlerta() {
+    alert("🚨 ALERTA ACTIVADA: Se envió tu ubicación a contactos y autoridades.");
+}
+
+// CARGAR MAPA PRINCIPAL
+function cargarMapaPrincipal() {
+    mapaSeguro = L.map('mapa-seguro').setView([-3.2583, -79.9659], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaSeguro);
+    L.marker([-3.2583, -79.9659]).addTo(mapaSeguro).bindPopup("Tu ubicación");
+}
+
+// CARGAR MAPA DE RIESGO
+function cargarMapaZonas() {
+    mapaZonas = L.map('mapa-zonas').setView([-3.2583, -79.9659], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaZonas);
+    L.circle([-3.2620, -79.9700], {color: '#DC2626', fillOpacity:0.4, radius:500}).addTo(mapaZonas).bindPopup("Alto riesgo");
+    L.circle([-3.2540, -79.9580], {color: '#F59E0B', fillOpacity:0.4, radius:400}).addTo(mapaZonas).bindPopup("Medio riesgo");
+}
+</script>
+</body>
+</html>
