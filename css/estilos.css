@@ -1,0 +1,137 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f0f4f8;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.pantalla {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    background: white;
+}
+
+.pantalla.activa {
+    display: block;
+}
+
+.cabecera {
+    background: #165DFF;
+    color: white;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.boton-volver {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.contenedor-centro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    padding: 20px;
+}
+
+.icono-principal {
+    font-size: 80px;
+    color: #165DFF;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 36px;
+    color: #222;
+    margin-bottom: 10px;
+}
+
+.boton {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    margin: 10px 0;
+}
+
+.boton-azul {
+    background: #165DFF;
+    color: white;
+}
+
+.boton-opcion {
+    width: 90%;
+    margin: 12px auto;
+    padding: 18px;
+    font-size: 17px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.boton-opcion:hover {
+    border-color: #165DFF;
+    background: #f8faff;
+}
+
+.boton-panico {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: #DC2626;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    border: 8px solid #ffcccc;
+    cursor: pointer;
+}
+
+.texto-ayuda {
+    margin-top: 20px;
+    color: #666;
+}
+
+#lista-contactos {
+    padding: 15px;
+}
+
+.tarjeta-contacto {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 12px;
+    background: #f8f9fa;
+}
+
+.tarjeta-contacto i {
+    font-size: 30px;
+    color: #165DFF;
+}
+
+#contenedor-mapa, #mapa-zonas {
+    height: calc(100vh - 70px);
+    width: 100%;
+}
