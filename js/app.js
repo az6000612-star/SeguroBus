@@ -1,28 +1,23 @@
 let mapaPrincipal, mapaZonas;
 
-// Cambiar entre pantallas
 function irPantalla(id) {
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById(id).classList.add('activa');
     
-    // Cargar mapas cuando se abran
     if(id === 'mapa' && !mapaPrincipal) cargarMapaPrincipal();
     if(id === 'zonas' && !mapaZonas) cargarMapaZonas();
 }
 
-// Activar alerta de emergencia
 function activarAlerta() {
-    alert("🚨 ALERTA ENVIADA: Tus contactos y autoridades reciben tu ubicación.");
+    alert("🚨 ALERTA ACTIVADA: Se envió tu ubicación a contactos y autoridades.");
 }
 
-// Cargar mapa principal
 function cargarMapaPrincipal() {
     mapaPrincipal = L.map('contenedor-mapa').setView([-3.2583, -79.9659], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaPrincipal);
     L.marker([-3.2583, -79.9659]).addTo(mapaPrincipal).bindPopup("Tu ubicación actual");
 }
 
-// Cargar mapa de zonas de riesgo
 function cargarMapaZonas() {
     mapaZonas = L.map('mapa-zonas').setView([-3.2583, -79.9659], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaZonas);
